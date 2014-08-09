@@ -36,6 +36,9 @@ module Blender
         if options[:client_key]
           ::Chef::Config[:client_key] = options[:client_key]
         end
+        if options[:chef_server_url]
+          ::Chef::Config[:chef_server_url] = options[:chef_server_url]
+        end
         attr = options[:attribute] || 'fqdn'
         q = ::Chef::Search::Query.new
         res = q.search(:node, search_term)

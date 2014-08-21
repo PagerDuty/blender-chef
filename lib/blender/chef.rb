@@ -1,1 +1,1 @@
-require 'lib/blender/discoveries/chef'
+require 'blender/discoveries/chef'

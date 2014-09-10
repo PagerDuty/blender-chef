@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^spec/})
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'blender'
+  spec.add_dependency 'pd-blender'
   spec.add_dependency 'chef'
 
   spec.add_development_dependency 'bundler'

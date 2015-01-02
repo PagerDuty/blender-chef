@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'pd-blender'
-  spec.add_dependency 'chef'
+  spec.add_dependency 'chef', '>= 12.0.0'
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'rake'
@@ -25,4 +25,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rubocop'
   spec.add_development_dependency 'simplecov'
   spec.add_development_dependency 'yard'
+  spec.add_development_dependency 'fauxhai'
 end

@@ -41,28 +41,8 @@ module Blender
         end
         attr = options[:attribute] || 'fqdn'
         q = ::Chef::Search::Query.new
-        res = q.search(:node, search_term)
-        res.first.collect{|n| node_attribute(n, attr)}
-      end
-
-      private
-      def node_attribute(data, nested_value_spec)
-        nested_value_spec.split(".").each do |attr|
-          if data.nil?
-            nil # don't get no method error on nil
-          elsif data.respond_to?(attr.to_sym)
-            data = data.send(attr.to_sym)
-          elsif data.respond_to?(:[])
-            data = data[attr]
-          else
-            data = begin
-              data.send(attr.to_sym)
-            rescue NoMethodError
-              nil
-            end
-          end
-        end
-        ( !data.kind_of?(Array) && data.respond_to?(:to_hash) ) ? data.to_hash : data
+        res = q.search(:node, search_term, filter_result: {attribute: attr.split('.')})
+        res.first.collect{|node_data| node_data['data']['attribute']}
       end
     end
   end

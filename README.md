@@ -38,6 +38,7 @@ option.
 ```ruby
 config(:chef, node_name: 'admin', client_key: 'admin.pem')
 members(search(:chef, 'roles:db', attribute: 'ec2_public_ipv4'))
+```
 
 
 ## Supported ruby versions
@@ -51,6 +52,7 @@ Blender currently support the following Ruby implementations:
 * *Ruby 2.1.2*
 
 ## License
+
 [Apache 2](http://www.apache.org/licenses/LICENSE-2.0)
 
 ## Contributing

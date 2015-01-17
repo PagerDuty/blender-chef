@@ -27,18 +27,10 @@ module Blender
       end
 
       def search(search_term = '*:*')
-        if options[:config_file]
-          ::Chef::Config.from_file options[:config_file]
-        end
-        if options[:node_name]
-          ::Chef::Config[:node_name] = options[:node_name]
-        end
-        if options[:client_key]
-          ::Chef::Config[:client_key] = options[:client_key]
-        end
-        if options[:chef_server_url]
-          ::Chef::Config[:chef_server_url] = options[:chef_server_url]
-        end
+        ::Chef::Config.from_file options[:config_file] if options[:config_file]
+        ::Chef::Config[:node_name] = options[:node_name] if options[:node_name]
+        ::Chef::Config[:client_key] = options[:client_key] if options[:client_key]
+        ::Chef::Config[:chef_server_url] = options[:chef_server_url] if options[:chef_server_url]
         attr = options[:attribute] || 'fqdn'
         q = ::Chef::Search::Query.new
         res = q.search(:node, search_term, filter_result: {attribute: attr.split('.')})

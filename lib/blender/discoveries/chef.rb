@@ -26,12 +26,22 @@ module Blender
         @options = options
       end
 
-      def search(search_term = '*:*')
+      def search(opts = {})
+        attr = options[:attribute] || 'fqdn'
+        case opts
+        when String
+          search_term = opts
+        when Hash
+          search_term = opts[:search_term]
+          attr = opts[:attribute] if opts.key?(:attribute)
+        else
+          raise ArgumentError, "Invalid argument type #{opts.class}"
+        end
+        search_term ||= '*:*'
         ::Chef::Config.from_file options[:config_file] if options[:config_file]
         ::Chef::Config[:node_name] = options[:node_name] if options[:node_name]
         ::Chef::Config[:client_key] = options[:client_key] if options[:client_key]
         ::Chef::Config[:chef_server_url] = options[:chef_server_url] if options[:chef_server_url]
-        attr = options[:attribute] || 'fqdn'
         q = ::Chef::Search::Query.new
         res = q.search(:node, search_term, filter_result: {attribute: attr.split('.')})
         res.first.collect{|node_data| node_data['data']['attribute']}

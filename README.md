@@ -41,6 +41,7 @@ members(search(:chef, 'roles:db', attribute: 'ec2_public_ipv4'))
 
 
 ## Supported ruby versions
+
 Blender-chef uses Chef 12 (for partial search). For chef 11, use 0.0.1 version of blender-chef.
 
 Blender currently support the following Ruby implementations:

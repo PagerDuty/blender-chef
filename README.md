@@ -1,6 +1,6 @@
 # Blender-Chef
 
-A chef based host discovery plugin for [Blender](https://github.com/PagerDuty/blender)
+A [chef](https://www.chef.io/chef) based host discovery plugin for [Blender](https://github.com/PagerDuty/blender)
 
 ## Installation
 
@@ -45,7 +45,7 @@ members(search(:chef, 'roles:db', attribute: 'ec2_public_ipv4'))
 
 Blender-chef uses Chef 12 (for partial search). For chef 11, use 0.0.1 version of blender-chef.
 
-Blender currently support the following Ruby implementations:
+Blender-chef currently support the following MRI versions:
 
 * *Ruby 1.9.3*
 * *Ruby 2.1.0*

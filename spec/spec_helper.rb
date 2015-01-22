@@ -23,6 +23,7 @@ module SpecHelper
     10.times do |n|
       node = Chef::Node.new
       node.name('node-'+ (n+1).to_s)
+      node.set['roles'] = n.odd? ? ['odd'] : ['even']
       node.consume_attributes(
         Fauxhai.mock(platform: 'ubuntu', version: '14.04').data
       )

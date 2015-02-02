@@ -38,7 +38,7 @@ module Blender
           raise ArgumentError, "Invalid argument type #{opts.class}"
         end
         search_term ||= '*:*'
-        ::Chef::Config.from_file options[:config_file] if options[:config_file]
+        ::Chef::Config.from_file(options[:config_file]) if options[:config_file]
         ::Chef::Config[:node_name] = options[:node_name] if options[:node_name]
         ::Chef::Config[:client_key] = options[:client_key] if options[:client_key]
         ::Chef::Config[:chef_server_url] = options[:chef_server_url] if options[:chef_server_url]

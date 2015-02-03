@@ -14,7 +14,7 @@ fetched from Chef server. Following is an example of dynamically obtaining
 all servers with `db` role, and enlisting their `iptables` rule.
 
 ```ruby
-require 'belnder/chef'
+require 'blender/chef'
 config(:chef, chef_sever_url: 'https://foo.bar.com', node_name: 'admin', client_key: 'admin.pem')
 members(search(:chef, 'roles:db'))
 ssh_task 'sudo iptables -L'
@@ -77,11 +77,11 @@ execution from CLI.
   knife blend --recipe-mode --search 'roles:web' recipes/nginx.rb
   ```
 
-  In `--recipe-mode` blender will treat the inpute file(s) as chef recipe
+  In `--recipe-mode` blender will treat the input file(s) as chef recipe
   and build necessary scp and ssh tasks to upload the recipe, execute it
   and remove the uploaded recipe.
 
-  Additional options are provided to cobtrol strategy, ssh credentials etc.
+  Additional options are provided to control strategy, ssh credentials etc.
 
 
 ## Supported ruby versions

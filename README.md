@@ -40,6 +40,49 @@ config(:chef, node_name: 'admin', client_key: 'admin.pem')
 members(search(:chef, 'roles:db', attribute: 'ec2_public_ipv4'))
 ```
 
+### Knife integration
+
+Blender-chef comes with a knife plugin that allows job or chef recipe
+execution from CLI.
+
+- Running raw blender jobs
+  Given the following job present in file `jobs/upgrade_chef.rb`
+
+  ```ruby
+  ssh_task 'sudo apt-get remove chef --purge'
+  ssh_task 'sudo apt-get remove chef --purge'
+  ssh_task 'wget -c https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/13.04/x86_64/chef_12.0.3-1_amd64.deb'
+  ssh_task 'sudo dpkg -i chef_12.0.3-1_amd64.deb'
+  ssh_task 'sudo chef-client'
+  ```
+
+  It can be executed against all chef nodes having `db` role as:
+
+  ```sh
+  knife blend --search 'roles:db' jobs/upgrade_chef.rb
+  ```
+- Running local one-off chef recipes against remote nodes using blender
+  Given the following chef recipe present ina local file `recipes/nginx.rb`
+
+  ```ruby
+  package 'nginx'
+  service 'nginx' do
+    action [:start, :enable]
+  end
+  ```
+
+  It can be executed against all chef nodes having `web` role as:
+
+  ```sh
+  knife blend --recipe-mode --search 'roles:web' recipes/nginx.rb
+  ```
+
+  In `--recipe-mode` blender will treat the inpute file(s) as chef recipe
+  and build necessary scp and ssh tasks to upload the recipe, execute it
+  and remove the uploaded recipe.
+
+  Additional options are provided to cobtrol strategy, ssh credentials etc.
+
 
 ## Supported ruby versions
 

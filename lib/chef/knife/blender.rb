@@ -146,8 +146,13 @@ class Chef
           @name_args.each do |file|
             case config[:mode]
             when :berkshelf
+              begin
+                require 'berkshelf'
+              rescue LoadError
+                raise RuntimeError, 'You must install berkshelf before using blender-chef in berkshelf mode'
+              end
               tempdir = Dir.mktmpdir
-              berkshelf_mode(scheduler, tempdir)
+              berkshelf_mode(scheduler, tempdir, file)
               FileUtils.rm_rf(tempdir)
             when :recipe
               recipe_mode(scheduler, file)
@@ -178,7 +183,8 @@ class Chef
         opts
       end
 
-      def berkshelf_mode(scheduler, file, tempdir, run_list)
+      def berkshelf_mode(scheduler, tempdir, file)
+        run_list = config[:run_list]
         scheduler.ruby_task 'generate cookbook tarball' do
           execute do
             berksfile = Berkshelf::Berksfile.from_file('Berksfile')

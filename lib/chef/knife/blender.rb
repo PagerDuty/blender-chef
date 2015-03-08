@@ -93,17 +93,16 @@ class Chef
         long: '--identity-file IDENTITY_FILE',
         description: 'Identity file for SSH authentication'
 
-      option :recipe_mode,
-        long: '--recipe-mode',
-        description: 'Treat input files as chef recipe and compose blender tasks to execute them (scp + ssh)',
-        boolean: true,
-        default: false
-
-      option :recipe_mode,
-        long: '--recipe-mode',
-        description: 'Treat input files as chef recipe and compose blender tasks to execute them (scp + ssh)',
-        boolean: true,
-        default: false
+      desc = "Run mode. Can be 'blender', 'recipe' or 'berkshelf'\n"
+      desc << "In 'blender' mode input file is treated as a Blender job\n"
+      desc << "In 'recipe' mode input file is treated as an individual recipe and executed using chef-apply\n"
+      desc << "In 'berkshelf' mode input file is treated as a Berksfile. Blender vendors cookbook using berksshelf, scp it and run chef against it in localmode\n"
+      option :mode,
+        long: '--mode MODE',
+        short: '-m MODE',
+        description: desc,
+        default: :blender,
+        proc: lambda{|s| s.to_sym}
 
       option :chef_apply,
         long: '--chef-apply',
@@ -111,54 +110,123 @@ class Chef
         description: 'chef-apply command to be used (effective only in recipe mode)',
         default: 'chef-apply'
 
+      option :run_list,
+        long: '--run-list RUN_LIST',
+        short: '-r RUN_LIST',
+        description: 'chef-apply command to be used (effective only in berkshelf mode)'
+
+      option :hosts,
+        long: '--hosts HOST1,HOST2,HOST3',
+        short: '-h HOST1,HOST2,HOST3',
+        description: 'Pass hosts manually (search and attribute option will be ignored)'
+
       def run
-        ssh_options = {
-          user: config[:user],
-          stdout: $stdout
-        }
-        ssh_options[:stdout] = $stdout if config[:stream]
-        if config[:password]
-          ssh_options[:password] = config[:password]
-        elsif config[:prompt]
-          ssh_options[:password] = ui.ask('SSH password: ') {|q|q.echo = false}
-        end
-        if config[:identity_file]
-          ssh_options[:keys] = Array(config[:identity_file])
-        end
         scheduler_options = {
           config_file: config[:blender_config],
           no_doc: config[:quiet]
         }
+
         discovery_options = {
           attribute: config[:attribute]
         }
-        Blender::Configuration[:noop] = config[:noop]
-        members = Blender::Discovery::Chef.new(discovery_options).search(config[:search])
 
-        @name_args.each do |file|
-          if config[:recipe_mode]
-            remote_path = File.join('/tmp', SecureRandom.hex(10))
-            Blender.blend(options[:file], scheduler_options) do |scheduler|
-              scheduler.strategy(config[:strategy])
-              scheduler.config(:ssh, ssh_options)
-              scheduler.config(:scp, ssh_options)
-              scheduler.members(members)
-              scheduler.scp_upload(remote_path) do
-                from file
+        Blender::Configuration[:noop] = config[:noop]
+
+        if config[:hosts]
+          members = config[:hosts].split(',')
+        else
+          members = Blender::Discovery::Chef.new(discovery_options).search(config[:search])
+        end
+
+        Blender.blend('blender-chef', scheduler_options) do |scheduler|
+          scheduler.strategy(config[:strategy])
+          scheduler.config(:ssh, ssh_options)
+          scheduler.config(:scp, ssh_options)
+          scheduler.members(members)
+          @name_args.each do |file|
+            case config[:mode]
+            when :berkshelf
+              begin
+                require 'berkshelf'
+              rescue LoadError
+                raise RuntimeError, 'You must install berkshelf before using blender-chef in berkshelf mode'
               end
-              scheduler.ssh_task "#{config[:chef_apply]} #{remote_path}"
-              scheduler.ssh_task "rm #{remote_path}"
-            end
-          else
-            job = File.read(file)
-            Blender.blend(options[:file], scheduler_options) do |scheduler|
-              scheduler.strategy(config[:strategy])
-              scheduler.config(:ssh, ssh_options)
-              scheduler.members(members)
-              scheduler.instance_eval(job, __FILE__, __LINE__)
+              tempdir = Dir.mktmpdir
+              berkshelf_mode(scheduler, tempdir, file)
+              FileUtils.rm_rf(tempdir)
+            when :recipe
+              recipe_mode(scheduler, file)
+            when :blender
+              blender_mode(scheduler, file)
+            else
+              raise ArgumentError, "Unknown mode: '#{config[:mode]}'"
             end
           end
         end
+      end
+
+      def ssh_options
+        opts = {
+          user: config[:user]
+        }
+        if config[:identity_file]
+          opts[:keys] = Array(config[:identity_file])
+        end
+        if config[:stream] or (!config[:quiet])
+          opts[:stdout] = $stdout
+        end
+        if config[:password]
+          opts[:password] = config[:password]
+        elsif config[:prompt]
+          opts[:password] = ui.ask('SSH password: ') {|q|q.echo = false}
+        end
+        opts
+      end
+
+      def berkshelf_mode(scheduler, tempdir, file)
+        run_list = config[:run_list]
+        scheduler.ruby_task 'generate cookbook tarball' do
+          execute do
+            berksfile = Berkshelf::Berksfile.from_file('Berksfile')
+            berksfile.vendor(tempdir)
+            File.open('/tmp/solo.rb', 'w') do |f|
+              f.write("cookbook_path '/tmp/cookbooks'\n")
+              f.write("file_cache_path '/var/cache/chef/cookbooks'\n")
+            end
+          end
+        end
+        scheduler.ssh_task 'nuke old cookbook directory if exist' do
+          execute 'rm -rf /tmp/cookbooks'
+        end
+        scheduler.scp_upload 'upload cookbooks' do
+          from '/tmp/cookbooks'
+          to '/tmp/cookbooks'
+          recursive true
+        end
+        scheduler.scp_upload '/tmp/solo.rb' do
+          from '/tmp/solo.rb'
+        end
+        scheduler.ssh_task 'create cache directory' do
+          execute 'sudo mkdir -p /var/cache/chef/cookbooks'
+        end
+        scheduler.ssh_task 'run chef solo' do
+          execute "sudo chef-client -z -o #{run_list} -c /tmp/solo.rb --force-logger"
+        end
+      end
+
+      def recipe_mode(scheduler, file)
+        remote_path = File.join('/tmp', SecureRandom.hex(10))
+        scheduler.scp_upload('upload recipe') do
+          to remote_path
+          from file
+        end
+        scheduler.ssh_task "#{config[:chef_apply]} #{remote_path}"
+        scheduler.ssh_task "rm #{remote_path}"
+      end
+
+      def blender_mode(scheduler, file)
+        job = File.read(file)
+        scheduler.instance_eval(job, __FILE__, __LINE__)
       end
     end
   end

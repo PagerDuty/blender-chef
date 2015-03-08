@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 require 'chef/knife/blender'
+require 'blender/rspec'
 
 describe Chef::Knife::Blend do
   before(:each) do
@@ -10,20 +11,24 @@ describe Chef::Knife::Blend do
     @knife.config[:passsword] = 'test-password'
     @knife.config[:search] = 'roles:db'
     @knife.config[:strategy] = :default
-    @knife.name_args = ["job.rb"]
   end
   it '#non recipe mode' do
-    disco = double(Blender::Discovery::Chef)
-    expect(Blender::Discovery::Chef).to receive(:new).and_return(disco)
-    expect(disco).to receive(:search).and_return(['host1', 'host2'])
+    @knife.name_args = ["job.rb"]
+    stub_search(:chef, 'roles:db').and_return(%w(host1 host2))
     expect(File).to receive(:read).with('job.rb').and_return('')
+    @knife.config[:mode] = :blender
     @knife.run
   end
   it '#recipe mode' do
-    @knife.config[:recipe_mode] = true
-    disco = double(Blender::Discovery::Chef)
-    expect(Blender::Discovery::Chef).to receive(:new).and_return(disco)
-    expect(disco).to receive(:search).and_return([])
+    @knife.name_args = ["job.rb"]
+    @knife.config[:mode] = :recipe
+    stub_search(:chef, 'roles:db').and_return([])
+    @knife.run
+  end
+  it '#berkshelf mode' do
+    @knife.name_args = ['/path/to/berksfile']
+    @knife.config[:mode] = :recipe
+    stub_search(:chef, 'roles:db').and_return([])
     @knife.run
   end
 end

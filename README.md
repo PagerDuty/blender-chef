@@ -42,10 +42,10 @@ members(search(:chef, 'roles:db', attribute: 'ec2_public_ipv4'))
 
 ### Knife integration
 
-Blender-chef comes with a knife plugin that allows job or chef recipe
-execution from CLI.
+Blender-chef comes with a knife plugin that allows job or chef recipe or node bootstrapping
+from command line interface.
 
-- Running raw blender jobs
+- Blender-mode, for running raw blender jobs
   Given the following job present in file `jobs/upgrade_chef.rb`
 
   ```ruby
@@ -61,7 +61,13 @@ execution from CLI.
   ```sh
   knife blend --search 'roles:db' jobs/upgrade_chef.rb
   ```
-- Running local one-off chef recipes against remote nodes using blender
+  this is equivalent to
+  ```sh
+  knife blend --mode blender --search 'roles:db' jobs/upgrade_chef.rb
+  ```
+  as blender mode is the default mode.
+
+- Recipe mode, for running one-off chef recipes against remote nodes using blender
   Given the following chef recipe present ina local file `recipes/nginx.rb`
 
   ```ruby
@@ -74,12 +80,24 @@ execution from CLI.
   It can be executed against all chef nodes having `web` role as:
 
   ```sh
-  knife blend --recipe-mode --search 'roles:web' recipes/nginx.rb
+  knife blend --mode recipe --search 'roles:web' recipes/nginx.rb
   ```
-
-  In `--recipe-mode` blender will treat the input file(s) as chef recipe
+  In recipe mode blender will treat the input file(s) as chef recipe
   and build necessary scp and ssh tasks to upload the recipe, execute it
   and remove the uploaded recipe.
+
+- Berkshelf mode, for bootstrapping server with chef solo. In this mode blender-chef
+  will assume the specifid file is a Berksfile, and use it to vendor cookbooks, then
+  upload it to the remote server using scp, and finally run chef in localmode against
+  the vendored cookbook directory. In berkshelf mode run list is specified via `--run-list`
+  option.
+
+  ```sh
+  knife blend Berksfile --mode berkshelf -h foo.bar.com -i id_rsa --run-list recipe[nginx]
+  ```
+
+  Note: You have to install berkshelf explicitly (vie bundler or using raw gem commands).
+
 
   Additional options are provided to control strategy, ssh credentials etc.
 
@@ -90,7 +108,6 @@ Blender-chef uses Chef 12 (for partial search). For chef 11, use 0.0.1 version o
 
 Blender-chef currently support the following MRI versions:
 
-* *Ruby 1.9.3*
 * *Ruby 2.1.0*
 * *Ruby 2.1.2*
 

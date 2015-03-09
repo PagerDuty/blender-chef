@@ -53,6 +53,12 @@ class Chef
         long: '--noop',
         description: 'no-op aka dry-run mode, run blender without executing jobs'
 
+      option :prompt,
+        default: false,
+        boolean: true,
+        long: '--prompt',
+        description: 'Prompt for password'
+
       option :quiet,
         default: false,
         boolean: true,

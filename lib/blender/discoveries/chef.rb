@@ -44,7 +44,7 @@ module Blender
         ::Chef::Config[:chef_server_url] = options[:chef_server_url] if options[:chef_server_url]
         q = ::Chef::Search::Query.new
         res = q.search(:node, search_term, filter_result: {attribute: attr.split('.')})
-        res.first.collect{|node_data| node_data['data']['attribute']}
+        res.first.collect{|node_data| node_data['attribute']}
       end
     end
   end

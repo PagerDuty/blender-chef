@@ -205,7 +205,7 @@ class Chef
           execute 'rm -rf /tmp/cookbooks'
         end
         scheduler.scp_upload 'upload cookbooks' do
-          from '/tmp/cookbooks'
+          from tempdir
           to '/tmp/cookbooks'
           recursive true
         end

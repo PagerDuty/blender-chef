@@ -147,6 +147,7 @@ class Chef
         Blender.blend('blender-chef', scheduler_options) do |scheduler|
           scheduler.strategy(config[:strategy])
           scheduler.config(:ssh, ssh_config)
+          scheduler.config(:ssh_multi, ssh_config)
           scheduler.config(:scp, ssh_config)
           scheduler.members(members)
           @name_args.each do |file|

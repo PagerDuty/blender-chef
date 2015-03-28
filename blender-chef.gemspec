@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = 'blender-chef'
-  spec.version       = '0.2.1'
+  spec.version       = '0.3'
   spec.authors       = ['Ranjib Dey']
   spec.email         = ['ranjib@pagerduty.com']
   spec.summary       = %q{Chef search based host discovery for blender}
@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^spec/})
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'pd-blender', '>= 0.1.0'
+  spec.add_dependency 'pd-blender', '>= 0.5'
   spec.add_dependency 'chef', '>= 12.1.1'
 
   spec.add_development_dependency 'bundler'

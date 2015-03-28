@@ -129,14 +129,14 @@ class Chef
       def run
         scheduler_options = {
           config_file: config[:blender_config],
-          no_doc: config[:quiet]
+          no_doc: config[:quiet],
+          noop: config[:noop]
         }
 
         discovery_options = {
           attribute: config[:attribute]
         }
 
-        Blender::Configuration[:noop] = config[:noop]
 
         if config[:hosts]
           members = config[:hosts].split(',')

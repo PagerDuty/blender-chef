@@ -137,7 +137,6 @@ class Chef
           attribute: config[:attribute]
         }
 
-
         if config[:hosts]
           members = config[:hosts].split(',')
         else
@@ -192,7 +191,7 @@ class Chef
 
       def berkshelf_mode(scheduler, tempdir, file)
         run_list = config[:run_list]
-        scheduler.ruby_task 'generate cookbook tarball' do
+        scheduler.ruby_task 'vendor cookbooks using berksfile' do
           execute do
             berksfile = Berkshelf::Berksfile.from_file('Berksfile')
             berksfile.vendor(tempdir)
